@@ -59,3 +59,23 @@ on audit_logs for select
 using (
   exists (select 1 from profiles p where p.id = auth.uid() and p.role = 'admin')
 );
+
+-- Admin can manage project segments
+create policy "project_segments_admin_manage"
+on project_segments for all
+using (
+  exists (select 1 from profiles p where p.id = auth.uid() and p.role = 'admin')
+)
+with check (
+  exists (select 1 from profiles p where p.id = auth.uid() and p.role = 'admin')
+);
+
+-- Admin can manage segment options
+create policy "segment_options_admin_manage"
+on segment_options for all
+using (
+  exists (select 1 from profiles p where p.id = auth.uid() and p.role = 'admin')
+)
+with check (
+  exists (select 1 from profiles p where p.id = auth.uid() and p.role = 'admin')
+);
