@@ -5,7 +5,7 @@ export default function PartnerDashboardPage() {
   return (
     <main className="mx-auto max-w-5xl p-6 md:p-10">
       <h1 className="text-3xl font-bold">Partner Dashboard</h1>
-      <p className="mt-2 text-slate-600">Assigned projects only. Replace mock data with Supabase query filtered by logged-in partner.</p>
+      <p className="mt-2 text-slate-600">Assigned projects only.</p>
       <div className="mt-8 grid gap-4 md:grid-cols-2">
         {mockProjects.map((project) => (
           <div key={project.id} className="rounded-2xl border bg-white p-5 shadow-sm">
