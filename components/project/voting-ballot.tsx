@@ -19,21 +19,39 @@ export function VotingBallot({ projectId }: VotingBallotProps) {
   const [project, setProject] = useState<{ status: string } | null>(null);
   const [segments, setSegments] = useState<Segment[]>([]);
   const [segmentsLoading, setSegmentsLoading] = useState(true);
+  const [loadErrorMessage, setLoadErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
-      const { data: projectData } = await supabase
+      setSegmentsLoading(true);
+      setLoadErrorMessage(null);
+
+      const { data: projectData, error: projectError } = await supabase
         .from("projects")
         .select("status")
         .eq("id", projectId)
         .single();
+
+      if (projectError) {
+        console.error("Supabase error:", projectError);
+        setLoadErrorMessage("Something went wrong while loading data.");
+        setSegmentsLoading(false);
+        return;
+      }
       setProject(projectData ?? null);
 
-      const { data: segmentsData } = await supabase
+      const { data: segmentsData, error: segmentsError } = await supabase
         .from("project_segments")
         .select("id, title, segment_options(id, label, sort_order)")
         .eq("project_id", projectId)
         .order("sort_order", { ascending: true });
+
+      if (segmentsError) {
+        console.error("Supabase error:", segmentsError);
+        setLoadErrorMessage("Something went wrong while loading data.");
+        setSegmentsLoading(false);
+        return;
+      }
 
       const mapped: Segment[] = (segmentsData || []).map((s: any) => ({
         id: s.id,
@@ -140,11 +158,23 @@ export function VotingBallot({ projectId }: VotingBallotProps) {
   const ballotSegments = segments;
 
   if (segmentsLoading) {
-    return <p className="text-slate-600">Loading ballot...</p>;
+    return <div className="p-10 text-slate-500">Loading...</div>;
+  }
+
+  if (loadErrorMessage) {
+    return (
+      <div className="rounded-xl border bg-red-50 p-6 text-red-700">
+        {loadErrorMessage}
+      </div>
+    );
   }
 
   if (ballotSegments.length === 0) {
-    return <p className="text-slate-600">No options to vote on yet.</p>;
+    return (
+      <div className="rounded-xl border bg-yellow-50 p-6 text-yellow-700">
+        No data available.
+      </div>
+    );
   }
 
   return (

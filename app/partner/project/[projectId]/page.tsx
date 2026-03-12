@@ -10,30 +10,64 @@ export default function PartnerProjectPage() {
   const projectId = params.projectId as string;
 
   const [project, setProject] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const loadProject = async () => {
+      setLoading(true);
+      setErrorMessage(null);
+
       const { data, error } = await supabase
         .from("projects")
         .select("*")
         .eq("id", projectId)
-        .single();
+        .maybeSingle();
 
       if (error) {
-        console.error(error);
+        console.error("Supabase error:", error);
+        setErrorMessage("Something went wrong while loading data.");
+        setLoading(false);
+        return;
+      }
+
+      if (!data) {
+        setProject(null);
+        setLoading(false);
         return;
       }
 
       setProject(data);
+      setLoading(false);
     };
 
     loadProject();
   }, [projectId]);
 
+  if (loading) {
+    return (
+      <main className="mx-auto max-w-5xl p-6 md:p-10">
+        <div className="p-10 text-slate-500">Loading...</div>
+      </main>
+    );
+  }
+
+  if (errorMessage) {
+    return (
+      <main className="mx-auto max-w-5xl p-6 md:p-10">
+        <div className="rounded-xl border bg-red-50 p-6 text-red-700">
+          {errorMessage}
+        </div>
+      </main>
+    );
+  }
+
   if (!project) {
     return (
       <main className="mx-auto max-w-5xl p-6 md:p-10">
-        <p>Loading project...</p>
+        <div className="rounded-xl border bg-yellow-50 p-6 text-yellow-700">
+          Project not found or you do not have access.
+        </div>
       </main>
     );
   }

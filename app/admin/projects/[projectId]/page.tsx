@@ -24,8 +24,13 @@ export default function ProjectEditorPage() {
   const [segments, setSegments] = useState<ProjectSegment[]>([]);
   const [newSegmentTitle, setNewSegmentTitle] = useState("");
   const [addingSegment, setAddingSegment] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const loadProject = async () => {
+    setLoading(true);
+    setErrorMessage(null);
+
     const { data, error } = await supabase
       .from("projects")
       .select("*")
@@ -33,10 +38,13 @@ export default function ProjectEditorPage() {
       .single();
 
     if (error) {
-      console.error(error);
+      console.error("Supabase error:", error);
+      setErrorMessage("Something went wrong while loading data.");
+      setLoading(false);
       return;
     }
     setProject(data);
+    setLoading(false);
   };
 
   const loadSegments = async () => {
@@ -52,7 +60,8 @@ export default function ProjectEditorPage() {
       .order("sort_order", { ascending: true });
 
     if (error) {
-      console.error(error);
+      console.error("Supabase error:", error);
+      setErrorMessage("Something went wrong while loading data.");
       return;
     }
     setSegments(data || []);
@@ -63,8 +72,8 @@ export default function ProjectEditorPage() {
   }, [projectId]);
 
   useEffect(() => {
-    if (projectId) loadSegments();
-  }, [projectId]);
+    if (projectId && project) loadSegments();
+  }, [projectId, project]);
 
   const handleAddSegment = async () => {
     if (!newSegmentTitle.trim()) return;
@@ -143,10 +152,30 @@ export default function ProjectEditorPage() {
   setProject(data);
 };
 
+  if (loading) {
+    return (
+      <main className="mx-auto max-w-5xl p-10">
+        <div className="p-10 text-slate-500">Loading...</div>
+      </main>
+    );
+  }
+
+  if (errorMessage) {
+    return (
+      <main className="mx-auto max-w-5xl p-10">
+        <div className="rounded-xl border bg-red-50 p-6 text-red-700">
+          {errorMessage}
+        </div>
+      </main>
+    );
+  }
+
   if (!project) {
     return (
-      <main className="p-10">
-        <p>Loading project...</p>
+      <main className="mx-auto max-w-5xl p-10">
+        <div className="rounded-xl border bg-yellow-50 p-6 text-yellow-700">
+          Project not found or you do not have access.
+        </div>
       </main>
     );
   }

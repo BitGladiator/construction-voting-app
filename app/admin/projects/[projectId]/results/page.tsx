@@ -14,26 +14,51 @@ export default function ResultsPage() {
   const [project, setProject] = useState<{ title: string } | null>(null);
   const [results, setResults] = useState<ResultSegment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
-      const { data: projectData } = await supabase
+      setLoading(true);
+      setErrorMessage(null);
+
+      const { data: projectData, error: projectError } = await supabase
         .from("projects")
         .select("title")
         .eq("id", projectId)
         .single();
+
+      if (projectError) {
+        console.error("Supabase error:", projectError);
+        setErrorMessage("Something went wrong while loading data.");
+        setLoading(false);
+        return;
+      }
       setProject(projectData ?? null);
 
-      const { data: votes } = await supabase
+      const { data: votes, error: votesError } = await supabase
         .from("votes")
         .select("segment_id, option_id, score")
         .eq("project_id", projectId);
 
-      const { data: segments } = await supabase
+      if (votesError) {
+        console.error("Supabase error:", votesError);
+        setErrorMessage("Something went wrong while loading data.");
+        setLoading(false);
+        return;
+      }
+
+      const { data: segments, error: segmentsError } = await supabase
         .from("project_segments")
         .select("id, title, segment_options(id, label)")
         .eq("project_id", projectId)
         .order("sort_order", { ascending: true });
+
+      if (segmentsError) {
+        console.error("Supabase error:", segmentsError);
+        setErrorMessage("Something went wrong while loading data.");
+        setLoading(false);
+        return;
+      }
 
       if (!votes || !segments) {
         setLoading(false);
@@ -78,7 +103,48 @@ export default function ResultsPage() {
   if (loading) {
     return (
       <main className="mx-auto max-w-6xl p-6 md:p-10">
-        <p className="text-slate-600">Loading results...</p>
+        <div className="p-10 text-slate-500">Loading...</div>
+      </main>
+    );
+  }
+
+  if (errorMessage) {
+    return (
+      <main className="mx-auto max-w-6xl p-6 md:p-10">
+        <div className="rounded-xl border bg-red-50 p-6 text-red-700">
+          {errorMessage}
+        </div>
+      </main>
+    );
+  }
+
+  if (!project) {
+    return (
+      <main className="mx-auto max-w-6xl p-6 md:p-10">
+        <div className="rounded-xl border bg-yellow-50 p-6 text-yellow-700">
+          Project not found or you do not have access.
+        </div>
+      </main>
+    );
+  }
+
+  if (results.length === 0) {
+    return (
+      <main className="mx-auto max-w-6xl p-6 md:p-10">
+        <div className="mb-6 flex items-center gap-4">
+          <Link
+            href={`/admin/projects/${projectId}`}
+            className="text-slate-600 underline hover:text-slate-900"
+          >
+            ← Back to Project
+          </Link>
+        </div>
+        <h1 className="text-3xl font-bold">
+          {project?.title ?? "Project"} Results
+        </h1>
+        <div className="mt-8 rounded-xl border bg-yellow-50 p-6 text-yellow-700">
+          No data available.
+        </div>
       </main>
     );
   }
