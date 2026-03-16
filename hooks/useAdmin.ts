@@ -23,7 +23,7 @@ export function useAdmin() {
         .from("profiles")
         .select("role")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
       setIsAdmin(profile?.role === "admin");
       setLoading(false);

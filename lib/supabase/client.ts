@@ -8,3 +8,4 @@ if (!url || !anonKey) {
 }
 
 export const supabase = createClient(url ?? "", anonKey ?? "");
+export { createClient } from "@supabase/supabase-js";
