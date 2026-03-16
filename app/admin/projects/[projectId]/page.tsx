@@ -154,7 +154,7 @@ export default function ProjectEditorPage() {
     setPartnerErr(null);
 
     try {
-      const res = await fetch("/api/admin/create-partner", {
+      const res = await fetch("/api/create-partner", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
